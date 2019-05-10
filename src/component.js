@@ -1,7 +1,8 @@
 import { assign } from './util';
 import { diff, commitRoot } from './diff/index';
 import options from './options';
-import { Fragment } from './create-element';
+import { Fragment, createElement } from './create-element';
+import { diffChildren } from './diff/children';
 
 /**
  * Base Component class. Provides `setState()` and `forceUpdate()`, which
@@ -71,24 +72,28 @@ Component.prototype.forceUpdate = function(callback) {
 		const force = callback!==false;
 
 		let mounts = [];
-		dom = diff(parentDom, vnode, vnode, this._context, parentDom.ownerSVGElement!==undefined, null, mounts, this._ancestorComponent, force, dom);
-		if (dom!=null && dom.parentNode!==parentDom) {
-			// The component may be rendered somewhere in the middle of the parent's
-			// children. We need to find the nearest DOM sibling to insert our
-			// newly rendered node into.
-			let nextDom;
-			let sibling = this._siblingVNode;
-			while (sibling && !(nextDom = sibling._dom)) {
-				sibling = sibling._component && sibling._component._siblingVNode;
-			}
+		// dom = diff(parentDom, vnode, vnode, this._context, parentDom.ownerSVGElement!==undefined, null, mounts, this._ancestorComponent, force, dom);
+		// if (dom!=null && dom.parentNode!==parentDom) {
+		// 	// The component may be rendered somewhere in the middle of the parent's
+		// 	// children. We need to find the nearest DOM sibling to insert our
+		// 	// newly rendered node into.
+		// 	let nextDom;
+		// 	let sibling = this._siblingVNode;
+		// 	while (sibling && !(nextDom = sibling._dom)) {
+		// 		sibling = sibling._component && sibling._component._siblingVNode;
+		// 	}
+		//
+		// 	if (nextDom) {
+		// 		parentDom.insertBefore(dom, nextDom);
+		// 	}
+		// 	else {
+		// 		parentDom.appendChild(dom);
+		// 	}
+		// }
 
-			if (nextDom) {
-				parentDom.insertBefore(dom, nextDom);
-			}
-			else {
-				parentDom.appendChild(dom);
-			}
-		}
+		const root = createElement(Fragment, {}, vnode);
+		diffChildren(parentDom, root, root, this._context, parentDom.ownerSVGElement!==undefined, null, mounts, this._ancestorComponent, parentDom.firstChild, force);
+
 		commitRoot(mounts, vnode);
 	}
 	if (callback) callback();
